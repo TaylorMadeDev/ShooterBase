@@ -62,6 +62,24 @@ namespace Scrapout.Weapons
             
             // Check if the part has a specific attachment point defined
             WeaponAttachmentPoint attachment = spawnedObj.GetComponentInChildren<WeaponAttachmentPoint>();
+
+            if (part.PartType == WeaponPartType.Body)
+            {
+                if (attachment != null)
+                {
+                    // Keep the body's rotation and only move it so the attachment point lands on the root socket.
+                    Vector3 posOffset = socket.position - attachment.transform.position;
+                    spawnedObj.transform.position += posOffset;
+                }
+                else
+                {
+                    // Body fallback: keep the prefab's rotation, only snap it to the root socket.
+                    spawnedObj.transform.localPosition = Vector3.zero;
+                }
+
+                _spawnedVisuals[part.PartType] = spawnedObj;
+                return;
+            }
             
             if (attachment != null)
             {
