@@ -21,12 +21,36 @@ namespace Scrapout.Weapons
         public Sprite Icon;
         public Vector2Int GridSize = new Vector2Int(1, 1);
 
-        [Header("Visuals")]
+        [Header("VISUALS")]
         public GameObject Prefab;
 
-        [Header("Modifiers")]
+        [Header("BODY SETTINGS")]
+        [Tooltip("Only used when PartType is Body.")]
+        public WeaponBodyType BodyType = WeaponBodyType.Pistol;
+
+        [Header("BARREL VFX")]
+        [Tooltip("Prefab spawned at the shoot point when this barrel fires.")]
+        public GameObject MuzzleFlashPrefab;
+
+        [Tooltip("Scale multiplier applied to the spawned muzzle flash.")]
+        public float MuzzleFlashScale = 1f;
+
+        [Header("MODIFIERS")]
         [Tooltip("Flat additions to the weapon's base stats.")]
-        public WeaponStats FlatBonuses;
+        public WeaponStats FlatBonuses = new WeaponStats()
+        {
+            Damage = 0,
+            FireRate = 0,
+            Accuracy = 0,
+            Recoil = 0,
+            BulletSpeed = 0,
+            Range = 0,
+            ReloadSpeed = 0,
+            MagazineSize = 0,
+            PelletsPerShot = 0,
+            Spread = 0,
+            Knockback = 0
+        };
         
         [Tooltip("Multipliers applied after flat bonuses. Leave at 1 for no change.")]
         public WeaponStats Multipliers = new WeaponStats()

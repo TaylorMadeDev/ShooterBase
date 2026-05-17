@@ -22,6 +22,17 @@ namespace Scrapout.Weapons
         ScrapModifier
     }
 
+    public enum WeaponBodyType
+    {
+        Pistol,
+        AssaultRifle,
+        Sniper,
+        Shotgun,
+        SMG,
+        LMG,
+        Marksman
+    }
+
     public enum WeaponSpecialEffect
     {
         None,

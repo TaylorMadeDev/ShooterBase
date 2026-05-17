@@ -9,6 +9,11 @@ namespace Scrapout.Weapons
         [Tooltip("The root transform where the Body will be spawned (e.g. the player's hand).")]
         public Transform RootSocket;
 
+        [Header("Procedural Visuals")]
+        [Tooltip("Material used to generate procedural duct tape at connection joints")]
+        public Material DuctTapeMaterial;
+        public bool EnableDuctTapeJoints = true;
+
         private Dictionary<WeaponPartType, GameObject> _spawnedVisuals = new Dictionary<WeaponPartType, GameObject>();
 
         public void AssembleVisuals(WeaponBuild build)
@@ -57,9 +62,10 @@ namespace Scrapout.Weapons
             spawnedObj = null;
             if (part == null || part.Prefab == null || socket == null) return;
 
-            // Spawn the part as a child of the socket.
-            spawnedObj = Instantiate(part.Prefab, socket);
-            
+            // Spawn the part at the socket's world transform, then parent it while preserving world scale.
+            spawnedObj = Instantiate(part.Prefab, socket.position, socket.rotation);
+            spawnedObj.transform.SetParent(socket, true);
+
             // Check if the part has a specific attachment point defined
             WeaponAttachmentPoint attachment = spawnedObj.GetComponentInChildren<WeaponAttachmentPoint>();
 
@@ -101,6 +107,12 @@ namespace Scrapout.Weapons
             }
 
             _spawnedVisuals[part.PartType] = spawnedObj;
+
+            // Generate duct tape at the joint seam (only for non-body parts attaching to the body)
+            if (EnableDuctTapeJoints && DuctTapeMaterial != null && part.PartType != WeaponPartType.Body)
+            {
+                JointTapeGenerator.GenerateTape(socket, spawnedObj, DuctTapeMaterial);
+            }
         }
 
         public void ClearAllVisuals()

@@ -112,6 +112,17 @@ namespace Scrapout.Weapons
             OnStatsRecalculated?.Invoke();
         }
 
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (!Application.isPlaying)
+                return;
+
+            RecalculateStats();
+            OnPartsChanged?.Invoke();
+        }
+#endif
+
         public List<WeaponPartData> GetAllEquippedParts()
         {
             List<WeaponPartData> parts = new List<WeaponPartData>();

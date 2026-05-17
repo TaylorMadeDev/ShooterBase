@@ -11,21 +11,46 @@ namespace Scrapout.Weapons
         [Tooltip("Fallback point if the active barrel/body doesn't have a WeaponShootPoint component.")]
         public Transform FallbackShootPoint; 
 
+        [Header("Muzzle Flash")]
+        [Tooltip("Used when the barrel part does not provide a muzzle flash prefab.")]
+        public GameObject DefaultMuzzleFlashPrefab;
+        [Tooltip("Scale applied to the default muzzle flash prefab.")]
+        public float DefaultMuzzleFlashScale = 1f;
+
         private WeaponVisualAssembler _assembler;
         private int _currentAmmo;
         private bool _isReloading;
         private float _lastFireTime;
 
+        private void OnEnable()
+        {
+            _assembler = GetComponent<WeaponVisualAssembler>();
+            SubscribeToBuild();
+        }
+
+        private void OnDisable()
+        {
+            UnsubscribeFromBuild();
+        }
+
+        private void OnValidate()
+        {
+            if (!Application.isPlaying)
+                return;
+
+            _assembler = GetComponent<WeaponVisualAssembler>();
+            SubscribeToBuild();
+
+            if (ActiveBuild != null && _assembler != null)
+            {
+                HandlePartsChanged();
+            }
+        }
+
         private void Awake()
         {
             _assembler = GetComponent<WeaponVisualAssembler>();
-            
-            // Subscribe to build changes so visuals auto-update
-            if (ActiveBuild != null)
-            {
-                ActiveBuild.OnPartsChanged += HandlePartsChanged;
-                ActiveBuild.RecalculateStats();
-            }
+            SubscribeToBuild();
         }
 
         private void Start()
@@ -35,6 +60,20 @@ namespace Scrapout.Weapons
                 _currentAmmo = ActiveBuild.FinalStats.MagazineSize;
                 _assembler.AssembleVisuals(ActiveBuild);
             }
+        }
+
+        private void SubscribeToBuild()
+        {
+            if (ActiveBuild == null) return;
+            ActiveBuild.OnPartsChanged -= HandlePartsChanged;
+            ActiveBuild.OnPartsChanged += HandlePartsChanged;
+            ActiveBuild.RecalculateStats();
+        }
+
+        private void UnsubscribeFromBuild()
+        {
+            if (ActiveBuild == null) return;
+            ActiveBuild.OnPartsChanged -= HandlePartsChanged;
         }
 
         private void OnDestroy()
@@ -86,6 +125,7 @@ namespace Scrapout.Weapons
                 FireSingleProjectile();
             }
 
+            SpawnMuzzleFlash();
             ApplyRecoilPlaceholder();
             HandleSpecialEffects();
         }
@@ -118,6 +158,28 @@ namespace Scrapout.Weapons
         {
             // Simple camera shake or weapon kick placeholder based on FinalStats.Recoil
             Debug.Log($"Applying Recoil: {ActiveBuild.FinalStats.Recoil}");
+        }
+
+        private void SpawnMuzzleFlash()
+        {
+            if (ActiveBuild == null) return;
+
+            GameObject prefab = ActiveBuild.Barrel != null && ActiveBuild.Barrel.MuzzleFlashPrefab != null
+                ? ActiveBuild.Barrel.MuzzleFlashPrefab
+                : DefaultMuzzleFlashPrefab;
+
+            if (prefab == null) return;
+
+            Transform shootPoint = GetActiveShootPoint();
+            if (shootPoint == null) return;
+
+            float scale = ActiveBuild.Barrel != null ? ActiveBuild.Barrel.MuzzleFlashScale : DefaultMuzzleFlashScale;
+            GameObject flash = Instantiate(prefab, shootPoint.position, shootPoint.rotation, shootPoint);
+
+            if (flash.TryGetComponent<MuzzleFlashEffect>(out var effect))
+            {
+                effect.PlayFlash(scale);
+            }
         }
 
         private void HandleSpecialEffects()
